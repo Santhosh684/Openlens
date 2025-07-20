@@ -9,24 +9,36 @@ from web_fetcher import (
     get_reddit_posts
 )
 
-# Session Memory
+
+
+# Initialize memory
 if "memory" not in st.session_state:
     st.session_state.memory = []
+if "mode" not in st.session_state:
+    st.session_state.mode = "URL Summarizer"
+if "auto_url" not in st.session_state:
+    st.session_state.auto_url = ""
 
-# Secrets
+query_params = st.experimental_get_query_params()
+if "auto_url" in query_params:
+    st.session_state.auto_url = query_params["auto_url"][0]
+
+# API Keys
 TOGETHER_API_KEY = st.secrets["TOGETHER_API_KEY"]
 news_key = st.secrets["newsapi"]
 reddit_id = st.secrets["reddit"]["client_id"]
 reddit_secret = st.secrets["reddit"]["client_secret"]
 reddit_agent = st.secrets["reddit"]["user_agent"]
 
+
+
+# LLaMA Request Setup
 headers = {
     "Authorization": f"Bearer {TOGETHER_API_KEY}",
     "Content-Type": "application/json"
 }
 API_URL = "https://api.together.xyz/v1/chat/completions"
 
-# Functions
 def extract_text_from_url(url):
     try:
         response = requests.get(url)
@@ -44,7 +56,9 @@ def query_llama_together(article_text, query):
             "role": "system",
             "content": (
                 "You are an expert research assistant. "
-                "Summarize news articles clearly and answer user questions precisely using only the article content. Avoid speculation. Have a sarcastic tone when appropriate, but always be helpful, and if the user asks for your opinion, do it in a funny and engaging way."
+                "Summarize news articles clearly and answer user questions precisely using only the article content. Avoid speculation. "
+                "Have a sarcastic tone when appropriate, but always be helpful. "
+                "If the user asks for your opinion, make it funny and engaging."
             )
         },
         {
@@ -79,71 +93,86 @@ Begin your response below:
     else:
         return f"API Error {response.status_code}: {response.text}"
 
+# --- FRONTEND LOGIC ---
+st.title("🧠 OpenLens – Unified AI Web Analyzer")
 
-# Streamlit UI
-st.set_page_config(page_title="OpenLens", layout="wide")
-st.title("🔍 OpenLens – Unified AI Web Assistant")
+mode = st.radio("Choose Mode:", ["URL Summarizer", "Web Data Explorer"])
+st.session_state.mode = mode
 
-option = st.radio("Choose an Option:", ["🔗 URL Summarizer", "🌐 Real-time Web Data"])
+# Handle Auto-Summarize from Web Data
+if st.session_state.auto_url:
+    mode = "URL Summarizer"
+    st.session_state.mode = "URL Summarizer"
+    auto_url = st.session_state.auto_url
+    st.session_state.auto_url = ""
+    st.experimental_rerun()
 
-if option == "🔗 URL Summarizer":
-    url = st.text_input("Enter article URL")
-    query = st.text_input("Ask a question about the article (optional):")
+# ------------------------ URL SUMMARIZER ------------------------
+if st.session_state.mode == "URL Summarizer":
+    url = st.text_input("Enter article URL", value=st.session_state.get("auto_url", ""), key="url_input")
+    query = st.text_input("Ask a question about the article (optional):", key="url_question")
 
-    if st.button("Analyze Article"):
+    if st.button("Analyze", key="analyze_button"):
         with st.spinner("Extracting article content..."):
             article_text = extract_text_from_url(url)
-            st.subheader("📝 Article Preview")
+            st.subheader("📰 Article Preview")
             st.write(article_text[:1500] + "...")
 
-        with st.spinner("Querying LLaMA 3.1..."):
-            result = query_llama_together(article_text, query)
-            st.subheader("🤖 LLaMA 3.1 Output")
+            with st.spinner("Querying LLaMA 3.1..."):
+                result = query_llama_together(article_text, query)
+                st.subheader("🧾 LLaMA 3.1 Output")
 
-            st.session_state.memory.append({
-                "url": url,
-                "question": query,
-                "summary_answer": result
-            })
+                # Store in session
+                st.session_state.memory.append({
+                    "url": url,
+                    "question": query,
+                    "summary_answer": result
+                })
 
-            if "Answer:" in result:
-                summary, answer = result.split("Answer:", 1)
-                st.markdown("**Summary:**")
-                st.markdown(summary.strip())
+                # Display smart split
+                if "Answer:" in result:
+                    summary, answer = result.split("Answer:", 1)
+                    st.markdown("### 📌 Summary")
+                    st.markdown(summary.strip())
 
-                if query:
-                    st.markdown(f"**Question Asked:** `{query}`")
-                    st.markdown("**Answer:**")
-                    st.markdown(answer.strip())
+                    if query:
+                        st.markdown("### ❓ Question Asked")
+                        st.markdown(f"`{query}`")
+                        st.markdown("### ✅ Answer")
+                        st.markdown(answer.strip())
+                    else:
+                        st.markdown("No specific question was asked.")
                 else:
-                    st.markdown("No specific question was asked.")
-            else:
-                st.markdown("**Summary & Answer**")
-                st.markdown(result.strip())
+                    st.markdown("### 📌 Summary & Answer")
+                    st.markdown(result.strip())
 
-elif option == "🌐 Real-time Web Data":
-    if st.button("Fetch Web Data"):
-        with st.spinner("Fetching..."):
-            news = get_top_news(news_key)
-            stocks = get_stock_blog_rss()
-            reddit = get_reddit_posts(reddit_id, reddit_secret, reddit_agent)
+# ------------------------ WEB DATA FETCH ------------------------
+elif st.session_state.mode == "Web Data Explorer":
+    if st.button("🔄 Fetch Real-Time Data"):
+        news = get_top_news(news_key)
+        stocks = get_stock_blog_rss()
+        reddit = get_reddit_posts(reddit_id, reddit_secret, reddit_agent)
 
-        st.subheader("🗞️ Top News")
-        st.write(news)
+        st.markdown("### 🗞️ Top News")
+        for i, article in enumerate(news[:10]):
+            st.markdown(f"{i+1}. [{article['title']}](/?auto_url={article['url']})")
 
-        st.subheader("📈 Stock Blogs")
-        st.write(stocks)
+        st.markdown("### 📈 Stock Blogs")
+        for i, post in enumerate(stocks[:10]):
+            st.markdown(f"{i+1}. [{post['title']}](/?auto_url={post['link']})")
 
-        st.subheader("👽 Reddit Posts")
-        st.write(reddit)
+        st.markdown("### 👽 Reddit Posts")
+        for i, post in enumerate(reddit[:10]):
+            st.markdown(f"{i+1}. [{post['title']}](/?auto_url={post['url']})")
 
-# Sidebar: Session Memory
+# ------------------------ SESSION MEMORY ------------------------
 with st.sidebar.expander("🧠 Session Memory", expanded=False):
     if st.session_state.memory:
-        for i, entry in enumerate(reversed(st.session_state.memory)):
+        for i, entry in enumerate(st.session_state.memory[::-1]):
             st.markdown(f"**{i+1}.** [{entry['url']}]({entry['url']})")
             if entry['question']:
                 st.markdown(f"- Q: _{entry['question']}_")
-            st.markdown(f"- A: {entry['summary_answer'][:100]}...\n---")
+            st.markdown(f"- A: {entry['summary_answer'][:100]}...\n")
+            st.markdown("---")
     else:
-        st.write("No history yet.")
+        st.write("No memory yet.")
