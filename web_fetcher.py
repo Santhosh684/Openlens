@@ -2,7 +2,7 @@
 
 import requests
 import feedparser
-import snscrape.modules.twitter as sntwitter
+
 import praw
 import streamlit as st
 from newsapi import NewsApiClient
