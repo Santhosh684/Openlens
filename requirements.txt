@@ -1,6 +1,9 @@
 streamlit
-openai
 requests
 pandas
 beautifulsoup4
 plotly
+feedparser
+snscrape
+praw
+newsapi-python
