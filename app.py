@@ -6,10 +6,7 @@ import json
 if "memory" not in st.session_state:
     st.session_state.memory = []
 
-
-
 TOGETHER_API_KEY = st.secrets["TOGETHER_API_KEY"]
-
 
 headers = {
     "Authorization": f"Bearer {TOGETHER_API_KEY}",
@@ -18,16 +15,16 @@ headers = {
 
 API_URL = "https://api.together.xyz/v1/chat/completions"
 
-
 def extract_text_from_url(url):
     try:
         response = requests.get(url)
+        if response.status_code != 200:
+            return f"Failed to fetch article: {response.status_code}"
         soup = BeautifulSoup(response.content, "html.parser")
         paragraphs = soup.find_all("p")
         return "\n".join([p.get_text() for p in paragraphs])
     except Exception as e:
         return f"Error fetching content: {e}"
-
 
 def query_llama_together(article_text, query):
     messages = [
@@ -71,12 +68,13 @@ Begin your response below:
         return f" API Error {response.status_code}: {response.text}"
 
 # Streamlit App
-st.title("🔍 OpenLens – AI Web Article Analyzer (LLaMA 3.1)")
+st.title(" OpenLens – AI Web Article Analyzer")
 
-url = st.text_input(" Enter article URL:")
+url = st.text_input("Enter article URL", help="Paste the full URL of a news article to analyze.")
+
 query = st.text_input("Ask a question about the article (optional):")
 
-#  Try to split result into summary and answer using simple keyword logic
+# Try to split result into summary and answer using simple keyword logic
 if st.button("Analyze"):
     with st.spinner("Extracting article content..."):
         article_text = extract_text_from_url(url)
@@ -111,7 +109,7 @@ if st.button("Analyze"):
                 st.markdown("Summary & Answer")
                 st.markdown(result.strip())
 
-#  Show previous queries from session memory
+# Show previous queries from session memory
 with st.sidebar.expander("Session Memory", expanded=False):
     if st.session_state.memory:
         for i, entry in enumerate(st.session_state.memory[::-1]):  # latest first
@@ -122,8 +120,6 @@ with st.sidebar.expander("Session Memory", expanded=False):
             st.markdown("---")
     else:
         st.write("No history yet.")
-
-
 
 from web_fetcher import (
     get_top_news,
@@ -136,10 +132,11 @@ from web_fetcher import (
 st.subheader("🌐 Real-time Web Content")
 
 # Replace with your actual API keys and secrets
-news_key = st.secrets["api_keys"]["newsapi"]
-reddit_id = st.secrets["api_keys"]["reddit_client_id"]
-reddit_secret = st.secrets["api_keys"]["reddit_client_secret"]
-reddit_agent = "openlens-research-agent"
+news_key = st.secrets["newsapi"]
+reddit_id = st.secrets["reddit"]["client_id"]
+reddit_secret = st.secrets["reddit"]["client_secret"]
+reddit_agent = st.secrets["reddit"]["user_agent"]
+
 
 if st.button("Fetch Real-Time Data"):
     news = get_top_news(news_key)
