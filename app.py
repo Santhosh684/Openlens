@@ -124,7 +124,7 @@ with st.sidebar.expander("Session Memory", expanded=False):
 from web_fetcher import (
     get_top_news,
     get_stock_blog_rss,
-    get_twitter_posts,
+    # get_twitter_posts,
     get_reddit_posts
 )
 
@@ -141,7 +141,7 @@ reddit_agent = st.secrets["reddit"]["user_agent"]
 if st.button("Fetch Real-Time Data"):
     news = get_top_news(news_key)
     stocks = get_stock_blog_rss()
-    tweets = get_twitter_posts("AI news")
+    # tweets = get_twitter_posts("AI news")
     reddit = get_reddit_posts(reddit_id, reddit_secret, reddit_agent)
 
     st.markdown("### 🗞️ Top News")
@@ -150,8 +150,8 @@ if st.button("Fetch Real-Time Data"):
     st.markdown("### 📈 Stock Blogs")
     st.write(stocks)
 
-    st.markdown("### 🐦 Twitter Posts")
-    st.write(tweets)
+    # st.markdown("### 🐦 Twitter Posts")
+    # st.write(tweets)
 
     st.markdown("### 👽 Reddit Posts")
     st.write(reddit)

@@ -26,20 +26,20 @@ def get_stock_blog_rss(rss_url="https://finance.yahoo.com/news/rssindex"):
         return [f"Error fetching RSS: {e}"]
 
 # --- Twitter (via tweepy) ---
-def get_twitter_posts(query, count=5):
-    try:
-        api_key = st.secrets["twitter"]["api_key"]
-        api_secret = st.secrets["twitter"]["api_secret"]
-        access_token = st.secrets["twitter"]["access_token"]
-        access_token_secret = st.secrets["twitter"]["access_token_secret"]
+# def get_twitter_posts(query, count=5):
+#     try:
+#         api_key = st.secrets["twitter"]["api_key"]
+#         api_secret = st.secrets["twitter"]["api_secret"]
+#         access_token = st.secrets["twitter"]["access_token"]
+#         access_token_secret = st.secrets["twitter"]["access_token_secret"]
 
-        auth = tweepy.OAuth1UserHandler(api_key, api_secret, access_token, access_token_secret)
-        api = tweepy.API(auth)
-        tweets = api.search_tweets(q=query, count=count, lang="en", tweet_mode="extended")
+#         auth = tweepy.OAuth1UserHandler(api_key, api_secret, access_token, access_token_secret)
+#         api = tweepy.API(auth)
+#         tweets = api.search_tweets(q=query, count=count, lang="en", tweet_mode="extended")
 
-        return [tweet.full_text for tweet in tweets]
-    except Exception as e:
-        return [f"Error fetching tweets: {e}"]
+#         return [tweet.full_text for tweet in tweets]
+#     except Exception as e:
+#         return [f"Error fetching tweets: {e}"]
 
 # --- Reddit (via praw) ---
 def get_reddit_posts(client_id, client_secret, user_agent, subreddit="technology", limit=5):
