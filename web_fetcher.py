@@ -13,7 +13,8 @@ def get_top_news(api_key, query="technology", language="en"):
     try:
         newsapi = NewsApiClient(api_key=api_key)
         top_headlines = newsapi.get_top_headlines(q=query, language=language)
-        return [{"title": top_headline.title, "url": top_headline.url} for top_headline in top_headlines.articles]
+        # return [{"title": top_headline.title, "url": top_headline.url} for top_headline in top_headlines.articles]
+        return [{"title": article["title"], "url": article["url"]} for article in top_headlines["articles"]]
     except Exception as e:
         return [f"Error fetching news: {e}"]
 

@@ -155,7 +155,10 @@ elif st.session_state.mode == "Web Data Explorer":
 
         st.markdown("### 🗞️ Top News")
         for i, article in enumerate(news[:10]):
-            st.markdown(f"{i+1}. [{article['title']}](/?auto_url={article['url']})")
+            if isinstance(article, dict) and "title" in article and "url" in article:
+                st.markdown(f"{i+1}. [{article['title']}](/?auto_url={article['url']})")
+            else:
+                st.markdown(f"{i+1}. ⚠️ {article}")
 
         st.markdown("### 📈 Stock Blogs")
         for i, post in enumerate(stocks[:10]):
