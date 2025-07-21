@@ -19,7 +19,7 @@ if "mode" not in st.session_state:
 if "auto_url" not in st.session_state:
     st.session_state.auto_url = ""
 
-query_params = st.experimental_get_query_params()
+query_params = st.query_params()
 if "auto_url" in query_params:
     st.session_state.auto_url = query_params["auto_url"]
 
@@ -105,7 +105,7 @@ if st.session_state.auto_url:
     st.session_state.mode = "URL Summarizer"
     auto_url = st.session_state.auto_url
     st.session_state.auto_url = ""
-    st.experimental_rerun()
+    st.rerun()
 
 # ------------------------ URL SUMMARIZER ------------------------
 if st.session_state.mode == "URL Summarizer":
