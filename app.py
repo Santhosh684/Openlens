@@ -78,7 +78,7 @@ Now, follow these steps:
 1. Give a concise **summary** of the article.
 2. If the following question is provided, answer it using only the article content:
 
-**Question**: {query if query else 'No question was asked'}
+**Question**: {query if query.strip() else 'No question was asked'}
 
 Begin your response below:
 """
@@ -111,6 +111,7 @@ if st.session_state.mode == "URL Summarizer":
     url_default = st.session_state.get("auto_url", "")
     url = st.text_input("Enter article URL", value=url_default, key="url_input")
     query = st.text_input("Ask a question about the article (optional):", key="url_question")
+    query = st.session_state.get("url_question", "").strip()
 
     auto_trigger = st.session_state.auto_url_triggered
     trigger_clicked = st.button("Analyze", key="analyze_button")
