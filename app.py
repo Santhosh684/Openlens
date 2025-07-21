@@ -9,30 +9,24 @@ from web_fetcher import (
     get_reddit_posts
 )
 
-
-
-# Initialize memory
+# --- Session State ---
 if "memory" not in st.session_state:
     st.session_state.memory = []
 if "mode" not in st.session_state:
     st.session_state.mode = "URL Summarizer"
-if "auto_url" not in st.session_state:
-    st.session_state.auto_url = ""
+if "selected_url" not in st.session_state:
+    st.session_state.selected_url = ""
+if "auto_run" not in st.session_state:
+    st.session_state.auto_run = False
 
-query_params = st.query_params
-if "auto_url" in query_params:
-    st.session_state.auto_url = query_params["auto_url"]
-
-# API Keys
+# --- API Keys ---
 TOGETHER_API_KEY = st.secrets["TOGETHER_API_KEY"]
 news_key = st.secrets["newsapi"]
 reddit_id = st.secrets["reddit"]["client_id"]
 reddit_secret = st.secrets["reddit"]["client_secret"]
 reddit_agent = st.secrets["reddit"]["user_agent"]
 
-
-
-# LLaMA Request Setup
+# --- LLaMA API Setup ---
 headers = {
     "Authorization": f"Bearer {TOGETHER_API_KEY}",
     "Content-Type": "application/json"
@@ -55,10 +49,7 @@ def query_llama_together(article_text, query):
         {
             "role": "system",
             "content": (
-                "You are an expert research assistant. "
-                "Summarize news articles clearly and answer user questions precisely using only the article content. Avoid speculation. "
-                "Have a sarcastic tone when appropriate, but always be helpful. "
-                "If the user asks for your opinion, make it funny and engaging."
+                "You are an expert research assistant. Summarize news articles clearly and answer user questions precisely using only the article content."
             )
         },
         {
@@ -93,26 +84,30 @@ Begin your response below:
     else:
         return f"API Error {response.status_code}: {response.text}"
 
-# --- FRONTEND LOGIC ---
+# --- MAIN APP ---
 st.title("🧠 OpenLens – Unified AI Web Analyzer")
 
+# Mode Switch
 mode = st.radio("Choose Mode:", ["URL Summarizer", "Web Data Explorer"])
 st.session_state.mode = mode
 
-# Handle Auto-Summarize from Web Data
-if st.session_state.auto_url:
-    mode = "URL Summarizer"
-    st.session_state.mode = "URL Summarizer"
-    auto_url = st.session_state.auto_url
-    st.session_state.auto_url = ""
-    st.rerun()
+# Auto-trigger summarization if user clicked on link
+if st.session_state.selected_url and st.session_state.mode == "URL Summarizer":
+    auto_trigger = True
+    url_default = st.session_state.selected_url
+    st.session_state.selected_url = ""  # reset
+else:
+    auto_trigger = False
+    url_default = ""
 
 # ------------------------ URL SUMMARIZER ------------------------
 if st.session_state.mode == "URL Summarizer":
-    url = st.text_input("Enter article URL", value=st.session_state.get("auto_url", ""), key="url_input")
+    url = st.text_input("Enter article URL", value=url_default, key="url_input")
     query = st.text_input("Ask a question about the article (optional):", key="url_question")
 
-    if st.button("Analyze", key="analyze_button"):
+    trigger_analysis = st.button("Analyze", key="analyze_button")
+
+    if trigger_analysis or auto_trigger:
         with st.spinner("Extracting article content..."):
             article_text = extract_text_from_url(url)
             st.subheader("📰 Article Preview")
@@ -122,14 +117,13 @@ if st.session_state.mode == "URL Summarizer":
                 result = query_llama_together(article_text, query)
                 st.subheader("🧾 LLaMA 3.1 Output")
 
-                # Store in session
+                # Store result
                 st.session_state.memory.append({
                     "url": url,
                     "question": query,
                     "summary_answer": result
                 })
 
-                # Display smart split
                 if "Answer:" in result:
                     summary, answer = result.split("Answer:", 1)
                     st.markdown("### 📌 Summary")
@@ -146,7 +140,7 @@ if st.session_state.mode == "URL Summarizer":
                     st.markdown("### 📌 Summary & Answer")
                     st.markdown(result.strip())
 
-# ------------------------ WEB DATA FETCH ------------------------
+# ------------------------ WEB DATA EXPLORER ------------------------
 elif st.session_state.mode == "Web Data Explorer":
     if st.button("🔄 Fetch Real-Time Data"):
         news = get_top_news(news_key)
@@ -156,17 +150,26 @@ elif st.session_state.mode == "Web Data Explorer":
         st.markdown("### 🗞️ Top News")
         for i, article in enumerate(news[:10]):
             if isinstance(article, dict) and "title" in article and "url" in article:
-                st.markdown(f"{i+1}. [{article['title']}](/?auto_url={article['url']})")
+                if st.button(f"{i+1}. {article['title']}", key=f"news_{i}"):
+                    st.session_state.selected_url = article["url"]
+                    st.session_state.mode = "URL Summarizer"
+                    st.experimental_rerun()
             else:
                 st.markdown(f"{i+1}. ⚠️ {article}")
 
         st.markdown("### 📈 Stock Blogs")
         for i, post in enumerate(stocks[:10]):
-            st.markdown(f"{i+1}. [{post['title']}](/?auto_url={post['link']})")
+            if st.button(f"{i+1}. {post['title']}", key=f"stock_{i}"):
+                st.session_state.selected_url = post["link"]
+                st.session_state.mode = "URL Summarizer"
+                st.experimental_rerun()
 
         st.markdown("### 👽 Reddit Posts")
         for i, post in enumerate(reddit[:10]):
-            st.markdown(f"{i+1}. [{post['title']}](/?auto_url={post['url']})")
+            if st.button(f"{i+1}. {post['title']}", key=f"reddit_{i}"):
+                st.session_state.selected_url = post["url"]
+                st.session_state.mode = "URL Summarizer"
+                st.experimental_rerun()
 
 # ------------------------ SESSION MEMORY ------------------------
 with st.sidebar.expander("🧠 Session Memory", expanded=False):
