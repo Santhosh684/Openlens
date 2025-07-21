@@ -125,7 +125,6 @@ if st.session_state.mode == "URL Summarizer":
             st.subheader("📰 Article Preview")
             st.write(article_text[:1500] + "...")
 
-        # If no valid article content was found
         if (
             not article_text
             or "Failed" in article_text
@@ -176,20 +175,31 @@ elif st.session_state.mode == "Web Data Explorer":
 
         st.markdown("### 📈 Stock Blogs")
         for i, post in enumerate(stocks[:10]):
-            st.markdown(f"{i+1}. [{post['title']}](/?auto_url={post['link']})")
+            if isinstance(post, dict):
+                st.markdown(f"{i+1}. [{post['title']}](/?auto_url={post['link']})")
+            else:
+                st.markdown(f"{i+1}. ⚠️ {post}")
 
         st.markdown("### 👽 Reddit Posts")
         for i, post in enumerate(reddit[:10]):
-            st.markdown(f"{i+1}. [{post['title']}](/?auto_url={post['url']})")
+            if isinstance(post, dict):
+                st.markdown(f"{i+1}. [{post['title']}](/?auto_url={post['url']})")
+            else:
+                st.markdown(f"{i+1}. ⚠️ {post}")
 
 # ------------------------ SESSION MEMORY ------------------------
 with st.sidebar.expander("🧠 Session Memory", expanded=False):
     if st.session_state.memory:
-        for i, entry in enumerate(st.session_state.memory[::-1]):
-            st.markdown(f"**{i+1}.** [{entry['url']}]({entry['url']})")
-            if entry['question']:
-                st.markdown(f"- Q: _{entry['question']}_")
-            st.markdown(f"- A: {entry['summary_answer'][:100]}...\n")
-            st.markdown("---")
+        selected = st.radio(
+            "Select a memory to display:",
+            [f"{i+1}. {item['url']}" for i, item in enumerate(st.session_state.memory[::-1])],
+            index=0,
+            key="memory_select"
+        )
+        idx = int(selected.split(". ")[0]) - 1
+        mem_item = st.session_state.memory[::-1][idx]
+
+        st.markdown(f"**Query:** {mem_item['question'] if mem_item['question'] else 'N/A'}")
+        st.markdown(f"**Summary/Answer:**\n{mem_item['summary_answer']}")
     else:
         st.write("No memory yet.")
