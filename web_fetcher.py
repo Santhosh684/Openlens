@@ -21,11 +21,10 @@ def get_top_news(api_key, query="technology", language="en"):
 def get_stock_blog_rss(rss_url="https://finance.yahoo.com/news/rssindex"):
     try:
         feed = feedparser.parse(rss_url)
-        # return [{"title": entry.title, "link": entry.link} for entry in feed.entries]
-        top_headlines = newsapi.get_top_headlines(q=query, language=language)
-        return [article['title'] for article in top_headlines['articles']]
+        return [{"title": entry.title, "link": entry.link} for entry in feed.entries]
     except Exception as e:
         return [{"title": f"Error fetching RSS: {e}", "link": "#"}]
+
 
 # --- Twitter (via tweepy) ---
 # def get_twitter_posts(query, count=5):
