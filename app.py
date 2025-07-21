@@ -43,12 +43,17 @@ API_URL = "https://api.together.xyz/v1/chat/completions"
 
 def extract_text_from_url(url):
     try:
-        response = requests.get(url)
+        response = requests.get(url, headers={"User-Agent": "Mozilla/5.0"})
         if response.status_code != 200:
             return f"Failed to fetch article: {response.status_code}"
+
         soup = BeautifulSoup(response.content, "html.parser")
-        paragraphs = soup.find_all("p")
-        return "\n".join([p.get_text() for p in paragraphs])
+        paragraphs = soup.find_all(["p", "h1", "h2", "h3"])
+        article_text = "\n".join(
+            [p.get_text().strip() for p in paragraphs if p.get_text().strip()]
+        )
+
+        return article_text if article_text else "No meaningful content found on the page."
     except Exception as e:
         return f"Error fetching content: {e}"
 
@@ -111,26 +116,33 @@ if st.session_state.mode == "URL Summarizer":
     trigger_clicked = st.button("Analyze", key="analyze_button")
 
     if auto_trigger or trigger_clicked:
-        st.session_state.auto_url = ""  # Clear after use
-        st.session_state.auto_url_triggered = False  # Reset trigger
+        st.session_state.auto_url = ""
+        st.session_state.auto_url_triggered = False
 
         with st.spinner("Extracting article content..."):
             article_text = extract_text_from_url(url)
             st.subheader("📰 Article Preview")
             st.write(article_text[:1500] + "...")
 
+        # If no valid article content was found
+        if (
+            not article_text
+            or "Failed" in article_text
+            or "Error" in article_text
+            or "No meaningful content" in article_text
+        ):
+            st.error("❌ Could not extract meaningful article content. Try a different link.")
+        else:
             with st.spinner("Querying LLaMA 3.1..."):
                 result = query_llama_together(article_text, query)
                 st.subheader("🧾 LLaMA 3.1 Output")
 
-                # Store in session
                 st.session_state.memory.append({
                     "url": url,
                     "question": query,
                     "summary_answer": result
                 })
 
-                # Display smart split
                 if "Answer:" in result:
                     summary, answer = result.split("Answer:", 1)
                     st.markdown("### 📌 Summary")
