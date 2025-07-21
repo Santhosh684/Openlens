@@ -51,6 +51,6 @@ def get_reddit_posts(client_id, client_secret, user_agent, subreddit="technology
             user_agent=user_agent
         )
         posts = reddit.subreddit(subreddit).hot(limit=limit)
-        return [post.title for post in posts]
+        return [{"title": post.title, "url": post.url} for post in posts]
     except Exception as e:
-        return [f"Error fetching Reddit posts: {e}"]
+        return [{"title": f"Error fetching Reddit posts: {e}", "url": "#"}]
