@@ -21,7 +21,7 @@ if "auto_url" not in st.session_state:
 
 query_params = st.experimental_get_query_params()
 if "auto_url" in query_params:
-    st.session_state.auto_url = query_params["auto_url"][0]
+    st.session_state.auto_url = query_params["auto_url"]
 
 # API Keys
 TOGETHER_API_KEY = st.secrets["TOGETHER_API_KEY"]
