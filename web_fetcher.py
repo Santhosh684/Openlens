@@ -1,5 +1,3 @@
-# web_fetcher.py
-
 import requests
 import feedparser
 
@@ -8,7 +6,7 @@ import streamlit as st
 from newsapi import NewsApiClient
 import tweepy
 
-# --- NewsAPI (Top Headlines) ---
+
 def get_top_news(api_key, query="technology", language="en"):
     try:
         newsapi = NewsApiClient(api_key=api_key)
@@ -18,7 +16,7 @@ def get_top_news(api_key, query="technology", language="en"):
     except Exception as e:
         return [f"Error fetching news: {e}"]
 
-# --- RSS Feed (e.g., Yahoo Finance) ---
+
 def get_stock_blog_rss(rss_url="https://finance.yahoo.com/news/rssindex"):
     try:
         feed = feedparser.parse(rss_url)
@@ -44,6 +42,7 @@ def get_stock_blog_rss(rss_url="https://finance.yahoo.com/news/rssindex"):
 #         return [f"Error fetching tweets: {e}"]
 
 # --- Reddit (via praw) ---
+
 def get_reddit_posts(client_id, client_secret, user_agent, subreddit="technology", limit=5):
     try:
         reddit = praw.Reddit(

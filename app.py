@@ -9,7 +9,7 @@ from web_fetcher import (
     get_reddit_posts
 )
 
-# ----------------- SESSION STATE INIT -----------------
+# session state initialization
 if "memory" not in st.session_state:
     st.session_state.memory = []
 if "mode" not in st.session_state:
@@ -19,7 +19,7 @@ if "auto_url" not in st.session_state:
 if "auto_url_triggered" not in st.session_state:
     st.session_state.auto_url_triggered = False
 
-# ----------------- HANDLE QUERY PARAM -----------------
+# query parameters handling
 query_params = st.query_params
 if "auto_url" in query_params and not st.session_state.auto_url_triggered:
     st.session_state.auto_url = query_params["auto_url"]
@@ -27,14 +27,14 @@ if "auto_url" in query_params and not st.session_state.auto_url_triggered:
     st.session_state.mode = "URL Summarizer"
     st.rerun()
 
-# ----------------- API KEYS -----------------
+# API keys
 TOGETHER_API_KEY = st.secrets["TOGETHER_API_KEY"]
 news_key = st.secrets["newsapi"]
 reddit_id = st.secrets["reddit"]["client_id"]
 reddit_secret = st.secrets["reddit"]["client_secret"]
 reddit_agent = st.secrets["reddit"]["user_agent"]
 
-# ----------------- LLaMA REQUEST SETUP -----------------
+# LLaMA REQUEST 
 headers = {
     "Authorization": f"Bearer {TOGETHER_API_KEY}",
     "Content-Type": "application/json"
@@ -101,12 +101,12 @@ Begin your response below:
         return f"API Error {response.status_code}: {response.text}"
 
 # ----------------- FRONTEND LOGIC -----------------
-st.title("🧠 OpenLens – Unified AI Web Analyzer")
+st.title(" OpenLens – Unified AI Web Analyzer")
 
 mode = st.radio("Choose Mode:", ["URL Summarizer", "Web Data Explorer"])
 st.session_state.mode = mode
 
-# ------------------------ URL SUMMARIZER ------------------------
+# URL SUMMARIZER
 if st.session_state.mode == "URL Summarizer":
     url_default = st.session_state.get("auto_url", "")
     url = st.text_input("Enter article URL", value=url_default, key="url_input")
@@ -122,8 +122,8 @@ if st.session_state.mode == "URL Summarizer":
 
         with st.spinner("Extracting article content..."):
             article_text = extract_text_from_url(url)
-            st.subheader("📰 Article Preview")
-            st.write(article_text[:1500] + "...")
+            st.subheader(" Article Preview")
+            st.write(article_text[:500] + "...")
 
         if (
             not article_text
@@ -131,11 +131,11 @@ if st.session_state.mode == "URL Summarizer":
             or "Error" in article_text
             or "No meaningful content" in article_text
         ):
-            st.error("❌ Could not extract meaningful article content. Try a different link.")
+            st.error(" Could not extract meaningful article content. Try a different link.")
         else:
             with st.spinner("Querying LLaMA 3.1..."):
                 result = query_llama_together(article_text, query)
-                st.subheader("🧾 LLaMA 3.1 Output")
+                st.subheader("Here's what I found:")
 
                 st.session_state.memory.append({
                     "url": url,
@@ -145,50 +145,50 @@ if st.session_state.mode == "URL Summarizer":
 
                 if "Answer:" in result:
                     summary, answer = result.split("Answer:", 1)
-                    st.markdown("### 📌 Summary")
+                    st.markdown("###  Summary")
                     st.markdown(summary.strip())
 
                     if query:
-                        st.markdown("### ❓ Question Asked")
+                        st.markdown("###  Question Asked")
                         st.markdown(f"`{query}`")
-                        st.markdown("### ✅ Answer")
+                        st.markdown("###  Answer")
                         st.markdown(answer.strip())
                     else:
                         st.markdown("No specific question was asked.")
                 else:
-                    st.markdown("### 📌 Summary & Answer")
+                    st.markdown("###  Summary & Answer")
                     st.markdown(result.strip())
 
-# ------------------------ WEB DATA EXPLORER ------------------------
+#  WEB DATA EXPLORER 
 elif st.session_state.mode == "Web Data Explorer":
-    if st.button("🔄 Fetch Real-Time Data"):
+    if st.button(" Fetch Real-Time Data"):
         news = get_top_news(news_key)
         stocks = get_stock_blog_rss()
         reddit = get_reddit_posts(reddit_id, reddit_secret, reddit_agent)
 
-        st.markdown("### 🗞️ Top News")
+        st.markdown("###  Top News")
         for i, article in enumerate(news[:10]):
             if isinstance(article, dict) and "title" in article and "url" in article:
                 st.markdown(f"{i+1}. [{article['title']}](/?auto_url={article['url']})")
             else:
-                st.markdown(f"{i+1}. ⚠️ {article}")
+                st.markdown(f"{i+1}.  {article}")
 
-        st.markdown("### 📈 Stock Blogs")
+        st.markdown("###  Stock Blogs")
         for i, post in enumerate(stocks[:10]):
             if isinstance(post, dict):
                 st.markdown(f"{i+1}. [{post['title']}](/?auto_url={post['link']})")
             else:
-                st.markdown(f"{i+1}. ⚠️ {post}")
+                st.markdown(f"{i+1}.  {post}")
 
-        st.markdown("### 👽 Reddit Posts")
+        st.markdown("###  Reddit Posts")
         for i, post in enumerate(reddit[:10]):
             if isinstance(post, dict):
                 st.markdown(f"{i+1}. [{post['title']}](/?auto_url={post['url']})")
             else:
-                st.markdown(f"{i+1}. ⚠️ {post}")
+                st.markdown(f"{i+1}. {post}")
 
-# ------------------------ SESSION MEMORY ------------------------
-with st.sidebar.expander("🧠 Session Memory", expanded=False):
+#  SESSION MEMORY 
+with st.sidebar.expander("Session Memory", expanded=False):
     if st.session_state.memory:
         selected = st.radio(
             "Select a memory to display:",
