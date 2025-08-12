@@ -10,9 +10,8 @@ from web_fetcher import (
     get_reddit_posts
 )
 
-# -----------------
-# Session state initialization
-# -----------------
+
+# session state 
 if "memory" not in st.session_state:
     st.session_state.memory = []
 if "mode" not in st.session_state:
@@ -24,9 +23,7 @@ if "url_question" not in st.session_state:
 if "auto_url_triggered" not in st.session_state:
     st.session_state.auto_url_triggered = False
 
-# -----------------
-# Query parameters handling (new way)
-# -----------------
+# query parameters 
 query_params = st.query_params
 auto_url_param = query_params.get("auto_url")
 
@@ -35,18 +32,16 @@ if auto_url_param and not st.session_state.auto_url_triggered:
     st.session_state.auto_url_triggered = True
     st.session_state.mode = "URL Summarizer"
 
-# -----------------
-# API keys
-# -----------------
+
+# api keys
 TOGETHER_API_KEY = st.secrets.get("TOGETHER_API_KEY")
 news_key = st.secrets.get("newsapi")
 reddit_id = st.secrets.get("reddit", {}).get("client_id")
 reddit_secret = st.secrets.get("reddit", {}).get("client_secret")
 reddit_agent = st.secrets.get("reddit", {}).get("user_agent")
 
-# -----------------
-# LLaMA request
-# -----------------
+# llaMA request
+
 headers = {
     "Authorization": f"Bearer {TOGETHER_API_KEY}",
     "Content-Type": "application/json"
@@ -112,17 +107,13 @@ Begin your response below:
     else:
         return f"API Error {response.status_code}: {response.text}"
 
-# -----------------
-# FRONTEND
-# -----------------
+
 st.title(" OpenLens – Unified AI Web Analyzer")
 
 mode = st.radio("Choose Mode:", ["URL Summarizer", "Web Data Explorer"])
 st.session_state.mode = mode
 
-# -----------------
-# URL SUMMARIZER
-# -----------------
+# url summarizer
 if st.session_state.mode == "URL Summarizer":
     url = st.text_input("Enter article URL", key="url_input")
     query = st.text_input("Ask a question about the article (optional):", key="url_question").strip()
@@ -172,9 +163,7 @@ if st.session_state.mode == "URL Summarizer":
                     st.markdown("###  Summary & Answer")
                     st.markdown(result.strip())
 
-# -----------------
-# WEB DATA EXPLORER
-# -----------------
+# data from web
 elif st.session_state.mode == "Web Data Explorer":
     if st.button(" Fetch Real-Time Data"):
         news = get_top_news(news_key)
@@ -202,9 +191,7 @@ elif st.session_state.mode == "Web Data Explorer":
             else:
                 st.markdown(f"{i+1}. {post}")
 
-# -----------------
-# SESSION MEMORY
-# -----------------
+# session memory
 with st.sidebar.expander("Session Memory", expanded=False):
     if st.session_state.memory:
         selected = st.radio(
