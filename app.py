@@ -137,7 +137,7 @@ if st.session_state.mode == "URL Summarizer":
         ):
             st.error(" Could not extract meaningful article content. Try a different link.")
         else:
-            with st.spinner("Querying LLaMA 3.1..."):
+            with st.spinner("Hold-on working on the query"):
                 result = query_llama_together(article_text, query)
                 st.subheader("Here's what I found:")
 
