@@ -1,7 +1,3 @@
-Sure — here’s a **brief introduction** for your OpenLens project:
-
----
-
 ## **OpenLens – Unified AI Web Analyzer**
 
 **Overview**
@@ -45,7 +41,3 @@ It allows users to either:
 * Easy to use and **deployable on Streamlit Cloud**.
 * Modular design allows easy integration of **more data sources or AI models** in the future.
 
----
-
-If you want, I can also prepare a **one-paragraph executive summary** you could put in a project README or presentation.
-Would you like me to create that?
