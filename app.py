@@ -2,6 +2,7 @@ import streamlit as st
 import requests
 from bs4 import BeautifulSoup
 import json
+from urllib.parse import unquote
 
 from web_fetcher import (
     get_top_news,
@@ -9,32 +10,38 @@ from web_fetcher import (
     get_reddit_posts
 )
 
-# session state initialization
+
+# session state 
 if "memory" not in st.session_state:
     st.session_state.memory = []
 if "mode" not in st.session_state:
     st.session_state.mode = "URL Summarizer"
-if "auto_url" not in st.session_state:
-    st.session_state.auto_url = ""
+if "url_input" not in st.session_state:
+    st.session_state.url_input = ""
+if "url_question" not in st.session_state:
+    st.session_state.url_question = ""
 if "auto_url_triggered" not in st.session_state:
     st.session_state.auto_url_triggered = False
 
-# query parameters handling
+# query parameters 
 query_params = st.query_params
-if "auto_url" in query_params and not st.session_state.auto_url_triggered:
-    st.session_state.auto_url = query_params["auto_url"]
+auto_url_param = query_params.get("auto_url")
+
+if auto_url_param and not st.session_state.auto_url_triggered:
+    st.session_state.url_input = unquote(auto_url_param)
     st.session_state.auto_url_triggered = True
     st.session_state.mode = "URL Summarizer"
-    st.rerun()
 
-# API keys
-TOGETHER_API_KEY = st.secrets["TOGETHER_API_KEY"]
-news_key = st.secrets["newsapi"]
-reddit_id = st.secrets["reddit"]["client_id"]
-reddit_secret = st.secrets["reddit"]["client_secret"]
-reddit_agent = st.secrets["reddit"]["user_agent"]
 
-# LLaMA REQUEST 
+# api keys
+TOGETHER_API_KEY = st.secrets.get("TOGETHER_API_KEY")
+news_key = st.secrets.get("newsapi")
+reddit_id = st.secrets.get("reddit", {}).get("client_id")
+reddit_secret = st.secrets.get("reddit", {}).get("client_secret")
+reddit_agent = st.secrets.get("reddit", {}).get("user_agent")
+
+# llaMA request
+
 headers = {
     "Authorization": f"Bearer {TOGETHER_API_KEY}",
     "Content-Type": "application/json"
@@ -86,7 +93,7 @@ Begin your response below:
     ]
 
     payload = {
-        "model": "meta-llama/Llama-3-70b-chat-hf", 
+        "model": "meta-llama/Llama-3-70b-chat-hf",
         "messages": messages,
         "temperature": 0.7,
         "top_p": 0.9,
@@ -100,24 +107,21 @@ Begin your response below:
     else:
         return f"API Error {response.status_code}: {response.text}"
 
-# ----------------- FRONTEND LOGIC -----------------
+
 st.title(" OpenLens – Unified AI Web Analyzer")
 
 mode = st.radio("Choose Mode:", ["URL Summarizer", "Web Data Explorer"])
 st.session_state.mode = mode
 
-# URL SUMMARIZER
+# url summarizer
 if st.session_state.mode == "URL Summarizer":
-    url_default = st.session_state.get("auto_url", "")
-    url = st.text_input("Enter article URL", value=url_default, key="url_input")
-    query = st.text_input("Ask a question about the article (optional):", key="url_question")
-    query = st.session_state.get("url_question", "").strip()
+    url = st.text_input("Enter article URL", key="url_input")
+    query = st.text_input("Ask a question about the article (optional):", key="url_question").strip()
 
     auto_trigger = st.session_state.auto_url_triggered
     trigger_clicked = st.button("Analyze", key="analyze_button")
 
     if auto_trigger or trigger_clicked:
-        st.session_state.auto_url = ""
         st.session_state.auto_url_triggered = False
 
         with st.spinner("Extracting article content..."):
@@ -133,7 +137,7 @@ if st.session_state.mode == "URL Summarizer":
         ):
             st.error(" Could not extract meaningful article content. Try a different link.")
         else:
-            with st.spinner("Querying LLaMA 3.1..."):
+            with st.spinner("Hold-on working on the query"):
                 result = query_llama_together(article_text, query)
                 st.subheader("Here's what I found:")
 
@@ -159,7 +163,7 @@ if st.session_state.mode == "URL Summarizer":
                     st.markdown("###  Summary & Answer")
                     st.markdown(result.strip())
 
-#  WEB DATA EXPLORER 
+# data from web
 elif st.session_state.mode == "Web Data Explorer":
     if st.button(" Fetch Real-Time Data"):
         news = get_top_news(news_key)
@@ -187,7 +191,7 @@ elif st.session_state.mode == "Web Data Explorer":
             else:
                 st.markdown(f"{i+1}. {post}")
 
-#  SESSION MEMORY 
+# session memory
 with st.sidebar.expander("Session Memory", expanded=False):
     if st.session_state.memory:
         selected = st.radio(

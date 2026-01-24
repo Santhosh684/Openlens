@@ -1,0 +1,43 @@
+## **OpenLens – Unified AI Web Analyzer**
+
+**Overview**
+OpenLens is a Streamlit-based AI application that integrates **real-time web content fetching, intelligent article summarization, and interactive Q\&A** in one unified interface.
+It allows users to either:
+
+1. **Summarize & query any online article** using advanced AI models (LLaMA 3.1 via the Together API).
+2. **Explore fresh online data** from trusted sources like news portals, stock market blogs, and Reddit, then instantly analyze linked articles.
+
+---
+
+**Key Features**
+
+* **Automated Article Extraction:** Cleans and extracts relevant text from any given URL using `BeautifulSoup`.
+* **AI-Powered Summaries & Q\&A:** Uses LLaMA 3.1 to generate concise summaries and answer context-specific questions without adding speculation.
+* **Real-Time Data Fetching:** Fetches trending news, finance blogs, and social posts in one click.
+* **Two Modes of Use:**
+
+  * *URL Summarizer* – Summarize and analyze articles on demand.
+  * *Web Data Explorer* – Browse live data sources and auto-analyze selected items.
+* **Session Memory:** Stores your recent analyses for quick access and comparison.
+* **Seamless UX:** Query parameters allow clicking a link in Explorer mode to auto-trigger summarization.
+
+---
+
+**Why It’s Needed**
+
+* **Information Overload:** News and online content flood in constantly, making it hard to grasp the core ideas quickly.
+* **Scattered Data Sources:** Users often have to jump between multiple tabs for news, blogs, and forums; OpenLens centralizes them.
+* **Faster Research:** Ideal for analysts, journalists, or researchers who need concise, accurate digests without reading full articles.
+* **Engaging AI Interaction:** The assistant answers questions based only on provided content—ensuring focused, context-relevant responses.
+* **Custom Tone:** A light sarcastic touch in summaries keeps reading engaging without losing professionalism.
+
+---
+
+**Pros**
+
+* Saves time by **compressing long content into actionable insights**.
+* Supports **both proactive browsing and reactive URL analysis**.
+* Maintains **private session-based memory** without storing external data.
+* Easy to use and **deployable on Streamlit Cloud**.
+* Modular design allows easy integration of **more data sources or AI models** in the future.
+
